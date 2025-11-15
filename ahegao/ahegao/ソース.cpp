@@ -4,7 +4,6 @@
 #include <string>
 #include <nlohmann/json.hpp>
 #include <fstream>
-#include <chrono>
 #include <dsound.h>
 #include <algorithm>
 HANDLE devicehandle;
@@ -12,7 +11,6 @@ std::ifstream codetokey("./codetokey.json");
 std::ifstream voicepath("./voicepath.json");
 nlohmann::json codetokey_json;
 nlohmann::json voicepath_json;
-auto lasttime = std::chrono::high_resolution_clock::now(), currenttime = std::chrono::high_resolution_clock::now();
 std::unordered_map<std::string, std::string> keyToVoice;
 LPDIRECTSOUND8 g_pDS = nullptr;
 std::unordered_map<std::string, LPDIRECTSOUNDBUFFER> keyToBuffer;
@@ -37,40 +35,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if (raw->header.dwType == RIM_TYPEKEYBOARD &&devicehandle == raw->header.hDevice) {
 				//std::cout << raw->data.keyboard.VKey << std::endl;
                 std::string keycode = std::to_string(raw->data.keyboard.VKey);
-				std::cout << "KeyCode: " << keycode << std::endl;
 				//std::string str = voicepath_json.value((std::string)codetokey_json.value(keycode, "none"), "none");
-                currenttime = std::chrono::high_resolution_clock::now();
-					std::chrono::duration<double, std::milli> elapsed = currenttime - lasttime;
-                if (elapsed.count() > 300) {
-                    std::cout << "device: " << raw->header.hDevice << std::endl;
-                    std::cout << "time  : " << elapsed.count() << "ms" << std::endl;
-                    lasttime = std::chrono::high_resolution_clock::now();
                     auto it = keyToBuffer.find(keycode);
                     if (it != keyToBuffer.end()) {
-                        //it->second->SetVolume(DSBVOLUME_MAX); // 最大音量
-                        it->second->SetCurrentPosition(0); // 先頭から再生
-                        auto ds = it->second->Play(0, 0, 0);
-                        DWORD status;
-                        it->second->GetStatus(&status);
-                        if (status & DSBSTATUS_PLAYING) {
-                            std::cout << "再生中です" << std::endl;
-                        }
-                        else {
-                            std::cout << "再生されていません" << std::endl;
-                        }
+                        if (!raw->data.keyboard.Flags) {
+                            std::cout << "device: " << raw->header.hDevice << std::endl;
+                            std::cout << "KeyCode: " << keycode << std::endl;
+                            //it->second->SetVolume(DSBVOLUME_MAX); // 最大音量(いたずら用)
+                            it->second->SetCurrentPosition(0); // 先頭から再生
+                            auto ds = it->second->Play(0, 0, 0);
+                            DWORD status;
+                            it->second->GetStatus(&status);
 
-						if (FAILED(ds)) {
-							std::cerr << "サウンドの再生に失敗しました: HRESULT=" << std::hex << ds << std::endl;
+
+                            if (FAILED(ds)) {
+                                std::cerr << "サウンドの再生に失敗しました: HRESULT=" << std::hex << ds << std::endl;
+                            }
+                            std::cout << "PlayingSound: " << voicepath_json[(std::string)codetokey_json[keycode]] << std::endl;//<=これは動作が遅くテスト用途でのみ有効化
                         }
-                        else {
-							std::cout << "サウンド再生成功: " << voicepath_json[(std::string)codetokey_json[keycode]] << std::endl;
-                        }
-                        std::cout << "PlayingSound: " << voicepath_json[(std::string)codetokey_json[keycode]] << std::endl;//<=これは動作が遅くテスト用途でのみ有効化
                     }
                     else {
 						std::cout << "登録されていないキーです、有効にしたい場合はjsonファイルに書き加えてください" << std::endl;
                     }
-                }
             }
         }
         delete[] lpb;
