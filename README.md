@@ -10,7 +10,8 @@ This is for ahegaokeyboard and others.This contains files "ahegao.exe", "codetok
 4. If you press the key registered, a voice in "voicepath.json".
 ## for developper
 It makes in visualstudio2022 comunity, and it is no portable because it uses winapi.  
-A part of this code "loadWavtoBuffer" writed by AI, so I don't understud this code.If you understud this and think of something better way or how to port to other operating systems, please send a pull request.
+A part of this code "loadWavtoBuffer" writed by AI, so I don't understud this code.If you understud this and think of something better way or how to port to other operating systems, please send a pull request.  
+This solution"s debagging working dhirectory is in ahegao.exe, please move the containts in "toplayvoice" to "ahegao/x64/debug" when debagging.
 ## Acknowledgements
 This project uses the nlohmann/json liblary by Niels Lohmann.  
 Special thanks to the contributors of the project.  
