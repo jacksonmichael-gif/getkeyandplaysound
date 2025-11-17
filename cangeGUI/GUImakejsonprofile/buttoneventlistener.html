@@ -1,0 +1,65 @@
+<!DOCTYPE html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        make keyboard buttons with event listeners
+    </title>
+    <style>
+        button{
+            width: 40px;
+            height: 40px;
+            margin: 2px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Keyboard Button Event Listener Example</h1>
+    <script>
+        function keyboard_key(key, keysize, keycode){
+            this.key = key;
+            this.keysize = keysize;
+            this.keycode = keycode;
+        }
+        const defaultkeysize = 40;
+        /*fetch("data.json") // ← 相対パスで指定
+                .then(response => {
+                    if (!response.ok) throw new Error("読み込み失敗");
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("読み込んだJSON:", data);
+                    alert("JSON読み込み成功！");
+                })
+                .catch(error => {
+                    console.error("エラー:", error);
+                    alert("JSON読み込みに失敗しました");
+                });*/
+                var keyboard_sizeandplace = new Array(Array(), Array(), Array(), Array(), Array(), Array());
+                keyboard_sizeandplace[0] = [new keyboard_key("Esc", defaultkeysize, 27), new keyboard_key("F1", defaultkeysize, 112), new keyboard_key("F2", defaultkeysize, 113), new keyboard_key("F3", defaultkeysize, 114), new keyboard_key("F4", defaultkeysize, 115), new keyboard_key("F5", defaultkeysize, 116), new keyboard_key("F6", defaultkeysize, 117), new keyboard_key("F7", defaultkeysize, 118), new keyboard_key("F8", defaultkeysize, 119), new keyboard_key("F9", defaultkeysize, 120), new keyboard_key("F10", defaultkeysize, 121), new keyboard_key("F11", defaultkeysize, 122), new keyboard_key("F12", defaultkeysize, 123)];
+                keyboard_sizeandplace[1] = [new keyboard_key("`", defaultkeysize, 192), new keyboard_key("1", defaultkeysize, 49), new keyboard_key("2", defaultkeysize, 50), new keyboard_key("3", defaultkeysize, 51), new keyboard_key("4", defaultkeysize, 52), new keyboard_key("5", defaultkeysize, 53), new keyboard_key("6", defaultkeysize, 54), new keyboard_key("7", defaultkeysize, 55), new keyboard_key("8", defaultkeysize, 56), new keyboard_key("9", defaultkeysize, 57), new keyboard_key("0", defaultkeysize, 48), new keyboard_key("-", defaultkeysize, 189), new keyboard_key("=", defaultkeysize, 187), new keyboard_key("Backspace", defaultkeysize * 2, 8)];
+                keyboard_sizeandplace[2] = [new keyboard_key("Tab", defaultkeysize * 1.5, 9), new keyboard_key("Q", defaultkeysize, 81), new keyboard_key("W", defaultkeysize, 87), new keyboard_key("E", defaultkeysize, 69), new keyboard_key("R", defaultkeysize, 82), new keyboard_key("T", defaultkeysize, 84), new keyboard_key("Y", defaultkeysize, 89), new keyboard_key("U", defaultkeysize, 85), new keyboard_key("I", defaultkeysize, 73), new keyboard_key("O", defaultkeysize, 79), new keyboard_key("P", defaultkeysize, 80), new keyboard_key("[", defaultkeysize, 219), new keyboard_key("]", defaultkeysize, 221), new keyboard_key("\\", defaultkeysize * 1.5, 220)];
+                keyboard_sizeandplace[3] = [new keyboard_key("CapsLock", defaultkeysize * 1.75, 20), new keyboard_key("A", defaultkeysize, 65), new keyboard_key("S", defaultkeysize, 83), new keyboard_key("D", defaultkeysize, 68), new keyboard_key("F", defaultkeysize, 70), new keyboard_key("G", defaultkeysize, 71), new keyboard_key("H", defaultkeysize, 72), new keyboard_key("J", defaultkeysize, 74), new keyboard_key("K", defaultkeysize, 75), new keyboard_key("L", defaultkeysize, 76), new keyboard_key(";", defaultkeysize, 186), new keyboard_key("'", defaultkeysize, 222), new keyboard_key("Enter", defaultkeysize * 2.25, 13)];
+                keyboard_sizeandplace[4] = [new keyboard_key("Shift", defaultkeysize * 2.25, 16), new keyboard_key("Z", defaultkeysize, 90), new keyboard_key("X", defaultkeysize, 88), new keyboard_key("C", defaultkeysize, 67), new keyboard_key("V", defaultkeysize, 86), new keyboard_key("B", defaultkeysize, 66), new keyboard_key("N", defaultkeysize, 78), new keyboard_key("M", defaultkeysize, 77), new keyboard_key(",", defaultkeysize, 188), new keyboard_key(".", defaultkeysize, 190), new keyboard_key("/", defaultkeysize, 191), new keyboard_key("Shift", defaultkeysize * 2.75, 16)];
+                keyboard_sizeandplace[5] = [new keyboard_key("Ctrl", defaultkeysize * 1.5, 17), new keyboard_key("Win", defaultkeysize * 1.5, 91), new keyboard_key("Alt", defaultkeysize * 1.5, 18), new keyboard_key("Space", defaultkeysize * 6, 32), new keyboard_key("Alt", defaultkeysize * 1.5, 18), new keyboard_key("Win", defaultkeysize * 1.5, 92), new keyboard_key("Menu", defaultkeysize * 1.5, 93), new keyboard_key("Ctrl", defaultkeysize * 1.5, 17)];
+
+        let pathjson ;
+        for(let i = 0; i <= 4; i++){
+            for(let j = 0; j < 14; j++){
+                if(!keyboard_sizeandplace[i][j]) continue;
+                let button = document.createElement('button');
+                button.id = 'key-' + keyboard_sizeandplace[i][j].key;
+                button.style.width = keyboard_sizeandplace[i][j].keysize + "px";
+                button.innerText = keyboard_sizeandplace[i][j].key;
+                document.body.appendChild(button);
+            }
+            document.body.appendChild(document.createElement('br'));
+    }
+        let button = document.getElementById('key-');
+        button.addEventListener('click', ()=>{
+            console.log(pathjson);
+        });
+
+    </script>
+</body>
+</html>

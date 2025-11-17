@@ -33,7 +33,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
             }
             if (raw->header.dwType == RIM_TYPEKEYBOARD &&devicehandle == raw->header.hDevice) {
-				//std::cout << raw->data.keyboard.VKey << std::endl;
+				std::cout << raw->data.keyboard.VKey << std::endl;
                 std::string keycode = std::to_string(raw->data.keyboard.VKey);
 				//std::string str = voicepath_json.value((std::string)codetokey_json.value(keycode, "none"), "none");
                     auto it = keyToBuffer.find(keycode);
