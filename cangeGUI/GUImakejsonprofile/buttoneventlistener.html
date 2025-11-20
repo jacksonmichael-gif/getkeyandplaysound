@@ -1,4 +1,5 @@
 <!DOCTYPE html lang="ja">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
 <head>
     <meta charset="UTF-8">
     <title>
@@ -14,27 +15,42 @@
     </style>
 </head>
 <body>
-    <h1>Keyboard Button Event Listener Example</h1>
+    profilename:
+    <input type = "text" id="profilenameInput">
+    <input type = "button" id="dlprofile" value="Download Profile"
+            width: 40px;
+            height: 20px;
+            margin: 2px;
+            font-size: 16px;>
+    <input type = "file" id="fileInput" style ="display:none;" accept="audio/*">
+    <a id="downloadLink" style="display:none;">Download Profile</a>
+    <h1>Keyboard Button make profile</h1>
     <script>
+        var zip = new JSZip();
+        const readFileAsArrayBuffer = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    resolve(reader.result);
+                };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        };
         function keyboard_key(key, keysize, keycode){
             this.key = key;
             this.keysize = keysize;
             this.keycode = keycode;
         }
         const defaultkeysize = 40;
-        /*fetch("data.json") // ← 相対パスで指定
-                .then(response => {
-                    if (!response.ok) throw new Error("読み込み失敗");
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("読み込んだJSON:", data);
-                    alert("JSON読み込み成功！");
-                })
-                .catch(error => {
-                    console.error("エラー:", error);
-                    alert("JSON読み込みに失敗しました");
-                });*/
+        const profilename = "default";
+        profilenameInput.addEventListener('change', ()=>{
+            if(!profilenameInput.value){
+                alert("プロファイルネームを入力してください!");
+                return;
+            }
+            profilename = profilenameInput.value;
+        });
                 var keyboard_sizeandplace = new Array(Array(), Array(), Array(), Array(), Array(), Array());
                 keyboard_sizeandplace[0] = [new keyboard_key("Esc", defaultkeysize, 27), new keyboard_key("F1", defaultkeysize, 112), new keyboard_key("F2", defaultkeysize, 113), new keyboard_key("F3", defaultkeysize, 114), new keyboard_key("F4", defaultkeysize, 115), new keyboard_key("F5", defaultkeysize, 116), new keyboard_key("F6", defaultkeysize, 117), new keyboard_key("F7", defaultkeysize, 118), new keyboard_key("F8", defaultkeysize, 119), new keyboard_key("F9", defaultkeysize, 120), new keyboard_key("F10", defaultkeysize, 121), new keyboard_key("F11", defaultkeysize, 122), new keyboard_key("F12", defaultkeysize, 123)];
                 keyboard_sizeandplace[1] = [new keyboard_key("`", defaultkeysize, 192), new keyboard_key("1", defaultkeysize, 49), new keyboard_key("2", defaultkeysize, 50), new keyboard_key("3", defaultkeysize, 51), new keyboard_key("4", defaultkeysize, 52), new keyboard_key("5", defaultkeysize, 53), new keyboard_key("6", defaultkeysize, 54), new keyboard_key("7", defaultkeysize, 55), new keyboard_key("8", defaultkeysize, 56), new keyboard_key("9", defaultkeysize, 57), new keyboard_key("0", defaultkeysize, 48), new keyboard_key("-", defaultkeysize, 189), new keyboard_key("=", defaultkeysize, 187), new keyboard_key("Backspace", defaultkeysize * 2, 8)];
@@ -44,6 +60,10 @@
                 keyboard_sizeandplace[5] = [new keyboard_key("Ctrl", defaultkeysize * 1.5, 17), new keyboard_key("Win", defaultkeysize * 1.5, 91), new keyboard_key("Alt", defaultkeysize * 1.5, 18), new keyboard_key("Space", defaultkeysize * 6, 32), new keyboard_key("Alt", defaultkeysize * 1.5, 18), new keyboard_key("Win", defaultkeysize * 1.5, 92), new keyboard_key("Menu", defaultkeysize * 1.5, 93), new keyboard_key("Ctrl", defaultkeysize * 1.5, 17)];
 
         let pathjson ;
+        const voicepath = {};
+        const voicesBase64 = {};
+        let clickTimer = null;
+        var buttons = new Array(Array(), Array(), Array(), Array(), Array(), Array());
         for(let i = 0; i <= 4; i++){
             for(let j = 0; j < 14; j++){
                 if(!keyboard_sizeandplace[i][j]) continue;
@@ -52,14 +72,77 @@
                 button.style.width = keyboard_sizeandplace[i][j].keysize + "px";
                 button.innerText = keyboard_sizeandplace[i][j].key;
                 document.body.appendChild(button);
+                buttons[i][j] = button;
+                button.addEventListener('click', () => {
+                    if (clickTimer) return; // すでにタイマーがあるなら何もしない
+                    clickTimer = setTimeout(() => {
+                    clickTimer = null;
+                    // シングルクリックの処理（例：アラートなど）
+                    const keycode = keyboard_sizeandplace[i][j].keycode;
+                    const dataUrl = voicepath[keycode];
+                    if (dataUrl) {
+                        const audio = new Audio(voicesBase64[keycode]);
+                        audio.play();
+                        console.log("Playing audio for keycode:", keycode);
+                    } else {
+                        //alert("No audio assigned to this key.");
+                        console.log("No audio assigned to this key.");
+                    }
+                    }, 250); // 250ms以内にdblclickが来ればキャンセルされる
+                });
+                button.addEventListener('dblclick', ()=>{
+                    fileInput.click();
+                    fileInput.onchange = async e => {
+                        const file = e.target.files[0];
+                        if(!file || !file.name.endsWith(".wav")) {
+                            alert("Please select a .wav audio file.");
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = async e => {
+                            const contents = e.target.result;
+                            const audio = new Audio(contents);
+                            audio.play();
+                            const keycode = keyboard_sizeandplace[i][j].keycode;
+                            const zipPath = `audio/${file.name}`;
+                            zip.file(zipPath, file);
+                            voicepath[keycode] = zipPath;
+                            voicesBase64[keycode] = contents;                      
+                        };
+                        reader.readAsDataURL(file);
+                    };
+                });
             }
             document.body.appendChild(document.createElement('br'));
     }
-        let button = document.getElementById('key-');
-        button.addEventListener('click', ()=>{
-            console.log(pathjson);
-        });
-
+    dlprofile.addEventListener('click', async () => {
+  if (!profilenameInput.value) {
+    alert("プロファイルネームを入力してください!");
+    return;
+  }
+  const pathMap = {}; // path.json に記述するマッピング
+  zip.file("path.json", JSON.stringify(voicepath, null, 2));
+  console.log(zip.files);// 確認用
+  // ZIP生成してダウンロード
+  const blob = await zip.generateAsync({ type: "blob" })
+  .then(blob => {
+    // 正常に生成された場合のみダウンロード処理へ
+    const link = document.getElementById("downloadLink");
+    link.href = URL.createObjectURL(blob);
+    link.download = profilenameInput.value + ".zip";
+    link.style.display = "inline";
+    link.textContent = "Download ZIP";
+  })
+  .catch(err => {
+    console.error("ZIP生成エラー:", err);
+    alert("ZIPの作成中にエラーが発生しました");
+  });
+  const link = document.getElementById("downloadLink");
+  link.href = URL.createObjectURL(blob);
+  link.download = profilenameInput.value + ".zip";
+  link.style.display = "inline";
+  link.textContent = "Download ZIP";
+});
     </script>
 </body>
 </html>
