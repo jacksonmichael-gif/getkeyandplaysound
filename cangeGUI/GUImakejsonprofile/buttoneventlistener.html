@@ -61,6 +61,7 @@
 
         let pathjson ;
         const voicepath = {};
+        const keyboard_files = {};
         const voicesBase64 = {};
         let clickTimer = null;
         var buttons = new Array(Array(), Array(), Array(), Array(), Array(), Array());
@@ -105,8 +106,9 @@
                             audio.play();
                             const keycode = keyboard_sizeandplace[i][j].keycode;
                             const zipPath = `audio/${file.name}`;
-                            zip.file(zipPath, file);
+                            //zip.file(zipPath, file);
                             voicepath[keycode] = zipPath;
+                            keyboard_files[keycode] = file;
                             voicesBase64[keycode] = contents;                      
                         };
                         reader.readAsDataURL(file);
@@ -120,8 +122,24 @@
     alert("プロファイルネームを入力してください!");
     return;
   }
+  for (let i = 0; i < keyboard_sizeandplace.length; i++) {
+  for (let j = 0; j < keyboard_sizeandplace[i].length; j++) {
+    const keyObj = keyboard_sizeandplace[i][j];
+    if (!keyObj) continue;
+
+    const keycode = keyObj.keycode;
+    if (keycode in voicepath) {
+      const updatedPath = profilenameInput.value + '/' + voicepath[keycode];
+      voicepath[keycode] = updatedPath;
+      zip.file(updatedPath, keyboard_files[keycode]);
+    } else {
+      console.log("No audio for keycode:", keycode);
+    }
+  }
+}
+
   const pathMap = {}; // path.json に記述するマッピング
-  zip.file("path.json", JSON.stringify(voicepath, null, 2));
+  zip.file(profilenameInput.value + '/' + "path.json", JSON.stringify(voicepath, null, 2));
   console.log(zip.files);// 確認用
   // ZIP生成してダウンロード
   const blob = await zip.generateAsync({ type: "blob" })
