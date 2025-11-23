@@ -7,13 +7,14 @@
 #include <dsound.h>
 #include <algorithm>
 HANDLE devicehandle;
-std::ifstream codetokey("./codetokey.json");
-std::ifstream voicepath("./voicepath.json");
+//std::ifstream codetokey("./codetokey.json");
+//std::ifstream voicepath("./voicepath.json");
 nlohmann::json codetokey_json;
 nlohmann::json voicepath_json;
 std::unordered_map<std::string, std::string> keyToVoice;
 LPDIRECTSOUND8 g_pDS = nullptr;
 std::unordered_map<std::string, LPDIRECTSOUNDBUFFER> keyToBuffer;
+std::string profiles;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (msg == WM_INPUT) {
@@ -33,7 +34,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
             }
             if (raw->header.dwType == RIM_TYPEKEYBOARD &&devicehandle == raw->header.hDevice) {
-				std::cout << raw->data.keyboard.VKey << std::endl;
+				//std::cout << raw->data.keyboard.VKey << std::endl;
                 std::string keycode = std::to_string(raw->data.keyboard.VKey);
 				//std::string str = voicepath_json.value((std::string)codetokey_json.value(keycode, "none"), "none");
                     auto it = keyToBuffer.find(keycode);
@@ -46,16 +47,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                             auto ds = it->second->Play(0, 0, 0);
                             DWORD status;
                             it->second->GetStatus(&status);
-
-
                             if (FAILED(ds)) {
                                 std::cerr << "サウンドの再生に失敗しました: HRESULT=" << std::hex << ds << std::endl;
                             }
-                            std::cout << "PlayingSound: " << voicepath_json[(std::string)codetokey_json[keycode]] << std::endl;//<=これは動作が遅くテスト用途でのみ有効化
+                            //std::cout << "PlayingSound: " << voicepath_json[(std::string)codetokey_json[keycode]] << std::endl;//<=これは動作が遅くテスト用途でのみ有効化
                         }
                     }
                     else {
-						std::cout << "登録されていないキーです、有効にしたい場合はjsonファイルに書き加えてください" << std::endl;
+						std::cout << "登録されていないキーです、有効にしたい場合はjsonファイルに書き加えてください:キーコード" << raw->data.keyboard.VKey << std::endl;
                     }
             }
         }
@@ -174,6 +173,40 @@ int main() {
         std::cerr << "DirectSoundの初期化に失敗しました" << std::endl;
         return -1;
     }
+    printf("どのプロファイルを使用しますか？y/n\n");
+    std::cin >> profiles;
+    std::string profilepath = "./profiles/" + profiles + "/path.json";
+    std::ifstream profile_json(profilepath);
+    if (!profile_json.is_open()) {
+        std::cerr << "ファイルを開けません: " << profilepath << std::endl;
+        return -1;
+    }
+
+    nlohmann::json profilesjson;
+    try {
+        profilesjson = nlohmann::json::parse(profile_json);
+    }
+    catch (nlohmann::json::parse_error& e) {
+        std::cerr << "JSONパースエラー: " << e.what() << std::endl;
+        return -1;
+    }
+    for (const auto& item : profilesjson.items()) {
+        std::cout << "profilesitems" << std::endl;
+        std::string keycode = item.key();
+        std::string profilewavspath =item.value();
+        profilewavspath = "./profiles/" + profilewavspath;
+        std::cout << "登録: " << keycode << " → " << profilewavspath << std::endl;
+
+        LPDIRECTSOUNDBUFFER buffer = LoadWAVToBuffer(profilewavspath);
+        if (buffer) {
+            keyToBuffer[keycode] = buffer;
+            std::cout << "バッファ登録成功: " << keycode << std::endl;
+        }
+        else {
+            std::cerr << "バッファ作成失敗: " << profilewavspath << std::endl;
+        }
+    }
+    std::cout << "入力するデバイスを登録してください" << std::endl;
     // RawInputデバイス登録
     RAWINPUTDEVICE rid;
     rid.usUsagePage = 0x01; // Generic desktop controls
@@ -181,42 +214,6 @@ int main() {
     rid.dwFlags = RIDEV_INPUTSINK;
     rid.hwndTarget = hwnd;
     RegisterRawInputDevices(&rid, 1, sizeof(rid));
-    if (!codetokey.is_open())
-        throw new std::exception("Failed open file.");
-
-    if (!nlohmann::json::accept(codetokey))
-        throw new std::exception("jsonのフォーマットが不正");
-    codetokey.seekg(0, std::ios::beg);
-	codetokey_json = nlohmann::json::parse(codetokey);
-    if (!voicepath.is_open())
-        throw new std::exception("Failed open file.");
-
-    if (!nlohmann::json::accept(voicepath))
-        throw new std::exception("jsonのフォーマットが不正");
-    voicepath.seekg(0, std::ios::beg);
-	voicepath_json = nlohmann::json::parse(voicepath);
-    for (const auto& item : codetokey_json.items()) {
-        std::string keycode = item.key();
-        std::string keyname = item.value();
-
-        if (!voicepath_json.contains(keyname)) {
-            std::cerr << "voicepath_json に " << keyname << " が存在しません" << std::endl;
-            continue;
-        }
-
-        std::string path = voicepath_json[keyname];
-        std::cout << "登録: " << keycode << " → " << path << std::endl;
-
-        LPDIRECTSOUNDBUFFER buffer = LoadWAVToBuffer(path);
-        if (buffer) {
-            keyToBuffer[keycode] = buffer;
-            std::cout << "バッファ登録成功: " << keycode << std::endl;
-        }
-        else {
-            std::cerr << "バッファ作成失敗: " << path << std::endl;
-        }
-    }
-    std::cout << "入力するデバイスを登録してください" << std::endl;
 
 
     // メッセージループ
