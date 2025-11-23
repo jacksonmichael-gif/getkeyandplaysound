@@ -1,13 +1,17 @@
 # getkeyandplaysound
-This repository is for ahegaokeyboard-a keyboard that printed sensual character each keys.
+This repository was developed for Sensual Keyboard.
 ## Discription
 (Note; This only works on Windows)  
-This is for ahegaokeyboard and others.This contains files "ahegao.exe", "codetokey.json", "voicepath.json", "voices".if you want change the voice, you can add a wav_pcm files that's name writed in ANSI stringds in "voices", and rewrite "voicepath.json" your path(it is usually recommended to write it as a relative path from "ahgao.exe"). 
+This release contains the executable file "ahegao.exe", "makeprofile.html", and a folder called "profiles".  
+If you want to add a new voice, create a profile using "makeprofile" or make the changes directly in the profile.
 ## How to use
-1. Dounload "ahegao.zip" and unzip the file.
+1. Dounload "release.zip" and unzip the file.
 2. Do the "ahegao.exe" in the "release".
-3. Console will ask you which device you want to register.and if you press a key on the keyboard, thats keyboard will register.
-4. If you press the key registered, a voice in "voicepath.json".
+3. Console will ask you which profiles you want to use,and let the profilename in profiles at console to use the profile.  
+If you want to add a new profile, you can make a new profile as zipped file with using "makeprofile.html".
+Please open "makeprofile.html" on chromium browser and double click key and select a wav format file, this file will  be registered in this key.
+Give the profile a name and save it as a .zip file.
+Unzip the saved zip file to "profiles".
 ## for developper
 It makes in visualstudio2022 comunity, and it is no portable because it uses winapi.  
 A part of this code "loadWavtoBuffer" writed by AI, so I don't understud this code.If you understud this and think of something better way or how to port to other operating systems, please send a pull request.  
