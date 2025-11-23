@@ -7,10 +7,6 @@
 #include <dsound.h>
 #include <algorithm>
 HANDLE devicehandle;
-//std::ifstream codetokey("./codetokey.json");
-//std::ifstream voicepath("./voicepath.json");
-nlohmann::json codetokey_json;
-nlohmann::json voicepath_json;
 std::unordered_map<std::string, std::string> keyToVoice;
 LPDIRECTSOUND8 g_pDS = nullptr;
 std::unordered_map<std::string, LPDIRECTSOUNDBUFFER> keyToBuffer;
@@ -34,9 +30,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
             }
             if (raw->header.dwType == RIM_TYPEKEYBOARD &&devicehandle == raw->header.hDevice) {
-				//std::cout << raw->data.keyboard.VKey << std::endl;
                 std::string keycode = std::to_string(raw->data.keyboard.VKey);
-				//std::string str = voicepath_json.value((std::string)codetokey_json.value(keycode, "none"), "none");
                     auto it = keyToBuffer.find(keycode);
                     if (it != keyToBuffer.end()) {
                         if (!raw->data.keyboard.Flags) {
@@ -155,7 +149,7 @@ LPDIRECTSOUNDBUFFER8 LoadWAVToBuffer(const std::string& filename) {
 }
 
 int main() {
-	std::cout << "初期設定中" << std::endl;
+    std::cout << "初期設定中" << std::endl;
     // ウィンドウクラス登録
     WNDCLASS wc = { 0 };
     wc.lpfnWndProc = WndProc;
@@ -166,30 +160,57 @@ int main() {
     // 非表示ウィンドウ作成
     HWND hwnd = CreateWindowEx(0, L"RawInputClass", L"RawInputWindow", 0,
         0, 0, 0, 0, HWND_MESSAGE, NULL, wc.hInstance, NULL);
-    
-	// DirectSound初期化
-	InitDirectSound(hwnd);
+
+    // DirectSound初期化
+    InitDirectSound(hwnd);
     if (!InitDirectSound(hwnd)) {
         std::cerr << "DirectSoundの初期化に失敗しました" << std::endl;
         return -1;
     }
-    printf("どのプロファイルを使用しますか？y/n\n");
-    std::cin >> profiles;
-    std::string profilepath = "./profiles/" + profiles + "/path.json";
-    std::ifstream profile_json(profilepath);
-    if (!profile_json.is_open()) {
-        std::cerr << "ファイルを開けません: " << profilepath << std::endl;
-        return -1;
+    std::string profiles;
+    nlohmann::json profilesjson;
+    bool isdefault = false;
+    printf("デフォルトのプロファイルを使用しますか？y->1/n->0\n");
+    std::cin >> isdefault;
+    if (isdefault) {
+        profiles = "defaultprofile";
+        std::string profilepath = "./profiles/" + profiles + "/path.json";
+        std::ifstream profile_json(profilepath);
+
+        if (!profile_json.is_open()) {
+            std::cerr << "デフォルトプロファイルを開けません: " << profilepath << std::endl;
+        }
+
+        try {
+            profilesjson = nlohmann::json::parse(profile_json);
+        }
+        catch (nlohmann::json::parse_error& e) {
+            std::cerr << "デフォルトプロファイルのJSONパースエラー: " << e.what() << std::endl;
+        }
+    }
+    while (!isdefault) {
+        std::cout << "どのプロファイルを使用しますか？" << std::endl;
+        std::cin >> profiles;
+
+        std::string profilepath = "./profiles/" + profiles + "/path.json";
+        std::ifstream profile_json(profilepath);
+
+        if (!profile_json.is_open()) {
+            std::cerr << "ファイルを開けません: " << profilepath << std::endl;
+            continue; // 再入力へ
+        }
+
+        try {
+            profilesjson = nlohmann::json::parse(profile_json);
+            break; // 成功したらループを抜ける
+        }
+        catch (nlohmann::json::parse_error& e) {
+            std::cerr << "JSONパースエラー: " << e.what() << std::endl;
+            continue; // 再入力へ
+        }
     }
 
-    nlohmann::json profilesjson;
-    try {
-        profilesjson = nlohmann::json::parse(profile_json);
-    }
-    catch (nlohmann::json::parse_error& e) {
-        std::cerr << "JSONパースエラー: " << e.what() << std::endl;
-        return -1;
-    }
+    // profilesjson を使った処理へ進む
     for (const auto& item : profilesjson.items()) {
         std::cout << "profilesitems" << std::endl;
         std::string keycode = item.key();
